@@ -1,6 +1,5 @@
 require_relative "baccarat"
 require "test/unit"
-require "mocha/test_unit"
 
 class BaccaratRulesTest < Test::Unit::TestCase
   def test_hand_value
