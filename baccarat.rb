@@ -1,12 +1,9 @@
-require "pry"
-
 class Card
-  attr_reader :name, :suit, :value
+  attr_reader :name, :suit
 
-  def initialize(name:,suit:,value:)
+  def initialize(name:,suit:)
     @name = name
     @suit = suit
-    @value = value
   end
 
   def to_s
@@ -23,7 +20,7 @@ class Deck
   def initialize(card_values)
     @cards = CARD_SUITS.flat_map do |suit|
       CARD_NAMES.map(&:to_s).map do |name|
-        Card.new(name: name, value: card_values[name], suit: suit)
+        Card.new(name: name, suit: suit)
       end
     end
   end
@@ -42,7 +39,7 @@ class Player
   end
 
   def hand_value
-    BaccaratRules.hand_value(cards.map(&:value))
+    BaccaratRules.hand_value(cards)
   end
 end
 
@@ -63,26 +60,30 @@ class BaccaratRules
     "Ace" => 1,
   }
 
-  def self.hand_value(values)
-    values.sum % 10
+  def self.card_value(card)
+    CARD_VALUES[card&.name]
   end
 
-  def self.player_needs_extra_card?(player_hand_value)
-    player_hand_value <= 5
+  def self.hand_value(cards)
+    cards.map{ |card| card_value(card) }.sum % 10
   end
 
-  def self.dealer_needs_extra_card?(dealer_hand_value, player_extra_card_value)
-    case dealer_hand_value
+  def self.player_needs_extra_card?(player_cards)
+    hand_value(player_cards) <= 5
+  end
+
+  def self.dealer_needs_extra_card?(dealer_cards, player_cards)
+    case hand_value(dealer_cards)
     when 0..2
       true
     when 3
-      [nil,0,1,2,3,4,5,6,7,9].include?(player_extra_card_value)
+      [nil,0,1,2,3,4,5,6,7,9].include?(card_value(player_cards[2]))
     when 4
-      [nil,2,3,4,5,6,7].include?(player_extra_card_value)
+      [nil,2,3,4,5,6,7].include?(card_value(player_cards[2]))
     when 5
-      [nil,4,5,6,7].include?(player_extra_card_value)
+      [nil,4,5,6,7].include?(card_value(player_cards[2]))
     when 6
-      [6,7].include?(player_extra_card_value)
+      [6,7].include?(card_value(player_cards[2]))
     else
       false
     end
@@ -118,7 +119,7 @@ class Baccarat
 
     # count points
     [@player, @dealer].each do |player|
-      puts "#{player.name} has #{BaccaratRules.hand_value(player.cards[0..1].map(&:value))} points"
+      puts "#{player.name} has #{BaccaratRules.hand_value(player.cards[0..1])} points"
     end
 
     # potential new dealings
@@ -128,7 +129,7 @@ class Baccarat
 
     # potential new count points
     [@player, @dealer].each do |player|
-      puts "#{player.name} has now #{BaccaratRules.hand_value(player.cards.map(&:value))} points" if player.cards[2]
+      puts "#{player.name} has now #{BaccaratRules.hand_value(player.cards)} points" if player.cards[2]
     end
 
     # determine winner
@@ -149,11 +150,11 @@ class Baccarat
   end
 
   def player_needs_extra_card?
-    BaccaratRules.player_needs_extra_card?(@player.hand_value)
+    BaccaratRules.player_needs_extra_card?(@player.cards)
   end
 
   def dealer_needs_extra_card?
-    BaccaratRules.dealer_needs_extra_card?(@dealer.hand_value, @player.hand_value)
+    BaccaratRules.dealer_needs_extra_card?(@dealer.cards, @player.cards)
   end
 
   def winner
