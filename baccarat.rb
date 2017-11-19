@@ -105,7 +105,7 @@ class Baccarat
 
     2.times{ deal_card_to(@dealer) }
 
-    deal_card_to(@player) if player_needs_extra_card?(@player)
+    deal_card_to(@player) if player_needs_extra_card?
 
     deal_card_to(@dealer) if dealer_needs_extra_card?
   end
@@ -148,8 +148,8 @@ class Baccarat
     player.get_card(card)
   end
 
-  def player_needs_extra_card?(player)
-    BaccaratRules.player_needs_extra_card?(player.hand_value)
+  def player_needs_extra_card?
+    BaccaratRules.player_needs_extra_card?(@player.hand_value)
   end
 
   def dealer_needs_extra_card?
